@@ -3,6 +3,12 @@
 
 #include "DHTStable.h"
 
+
+#if DEBUG
+#include "avr8-stub.h"
+#endif
+
+
 // OLED Constants =====================================================================================
 //
 // SPI Wiring for OLED Display Pins on Arduino Nano
@@ -87,6 +93,11 @@ uint8_t dataPointsCollected = 0;
 
 void setup()
 {
+#if DEBUG
+  // Initialize GDB stub
+  debug_init();
+#endif
+
     gfx->begin();
     gfx->fillScreen(BLACK);
 
