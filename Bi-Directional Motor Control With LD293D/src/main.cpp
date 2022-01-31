@@ -16,8 +16,11 @@
 #define DIRECTION_1A_PIN 2
 #define DIRECTION_2A_PIN 7
 
+
+long minimumPwmDutyForMotorStart = 0;
+
 bool isLeft = true;
-uint8_t currentMotorSpeed = 0;
+long currentMotorSpeed = 0;
 
 
 bool readButtonStateWithDebounce(uint8_t pin, int& pinState)
@@ -82,6 +85,16 @@ void setDirection(bool left)
   }
 }
 
+long getMinimumPwmDuty(float motorStartVoltage, float powerRailVoltage)
+{
+  // Calculate the PWM duty cycle needed to apply the motor's start voltage
+  // Duty cycle = Square (Vstart / VpowerRail)
+  double pwmDutyInPercentage = square(motorStartVoltage / powerRailVoltage);
+
+  // analogWrite() encodes PWM between 0 and 255 - Map the PWN duty to this interval
+  return ceil(255.0 * pwmDutyInPercentage);
+}
+
 void setup() {
 #if DEBUG
   // Initialize GDB stub
@@ -97,6 +110,12 @@ void setup() {
   pinMode(DIRECTION_1A_PIN, OUTPUT);
   pinMode(DIRECTION_2A_PIN, OUTPUT);
   setDirection(isLeft);
+
+  // Theorically: Power rail is 5V and DC motor starting voltage is 2V on the datasheet -> PWM duty for start = 16% = square(2 / 5).
+  // We measured our power supply at about 4.9V and the DC motor starting voltage at about 2.2V -> We observe a start at about PWM duty = 31%, implying a starting voltage of about 2.8V with a 4.9V power rail
+  // The circuit had a 0.1uF capacitor between both leads to the DC motor and one 0.1uF capacitor from each lead to ground.
+  minimumPwmDutyForMotorStart = getMinimumPwmDuty(2.0f, 5.0f);
+
 }
 
 void loop() {
@@ -108,8 +127,10 @@ void loop() {
   }
 
   // Read speed from potentiometer - It will be betwen 0 and 1023 since the Analog to Digital conversion is 10 bits
+  // Consider a reading or 0 on the potentiometer as "stop" and anything above 0 as the minimum PWN
   int speedPotentiometerValue = analogRead(SPEED_ANALOG_PIN);
-  uint8_t requestedSpeed = map(speedPotentiometerValue, 0, 1023, 0, 255);
+  long requestedSpeed = map(speedPotentiometerValue, 0, 1023, speedPotentiometerValue == 0 ? 0 : minimumPwmDutyForMotorStart, 255);
+
   if (currentMotorSpeed != requestedSpeed)
   {
     currentMotorSpeed = requestedSpeed;
