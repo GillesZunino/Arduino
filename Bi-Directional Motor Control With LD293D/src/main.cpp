@@ -5,7 +5,7 @@
 #endif
 
 
-#define DEBOUNCE_DELAY_IN_MS 1
+#define DEBOUNCE_DELAY_IN_MS 10
 
 
 #define BUITLIN_LED_PIN 13
@@ -13,22 +13,28 @@
 #define SPEED_ANALOG_PIN A0
 #define MOTOR_CONTROL_PWM_PIN 3
 
+//
+// Direction pins - Optionally, LEDs can be attached to these pinms to see motor direction
+// * - Attach red LED in serie with a 1K Ohm resistor (Vf = 1.85V)
+// * - Attach green LED in serie with a 1K Ohm resistor (Vf = 2.8V)
+// * - Attach blue LED in serie with a 1K Ohm resistor (Vf = 2.5V)
+//
 #define DIRECTION_1A_PIN 2
 #define DIRECTION_2A_PIN 7
 
 
-long minimumPwmDutyForMotorStart = 0;
+long minimumPwmDutyForMotorStart;
 
-bool isLeft = true;
+bool isLeft;
 long currentMotorSpeed = 0;
 
 
 bool readButtonStateWithDebounce(uint8_t pin, int& pinState)
 {
-  static int currentPinState;
-  static int lastPinState = HIGH;
+  static int currentPinState = LOW;
+  static int lastPinState = LOW;
 
-  static unsigned long lastPinChangeTime = 0;
+  static unsigned long lastPinChangeTime = millis();
 
   // Read the pin
   int reading = digitalRead(DIRECTION_BUTTON_PIN);
@@ -50,27 +56,22 @@ bool readButtonStateWithDebounce(uint8_t pin, int& pinState)
       return true;
     }
   }
+
+  pinState = reading;
   return false;
 }
 
-bool getDirection() {
-  // Read the  button state and account for switch bounce
+bool getDirectionChanged() {
+  // Read the  button state and account for switch bounce - readButtonStateWithDebounce() will return true if this is a 'legitimate' button state change
+  // Our left / right button is configured on a INPUT_PULLUP pin so it will be 'pressed' with its stable state is LOW
   int buttonState;
-  if (readButtonStateWithDebounce(DIRECTION_BUTTON_PIN, buttonState))
-  {
-      // We have a stable reading - The pin is configured with INPUT_PULLUP so it is LOW when pressed and HIGH when released
-      if (buttonState == LOW)
-      {
-        isLeft = !isLeft;
-        return true;
-      }
-  }
-
-  return false;
+  return readButtonStateWithDebounce(DIRECTION_BUTTON_PIN, buttonState) && (buttonState == LOW);
 }
 
 void setDirection(bool left)
 {
+  isLeft = left;
+
   if (left)
   {
     // 1A = H, 2A = L -> Turn left
@@ -101,29 +102,32 @@ void setup() {
   debug_init();
 #endif
 
+  // Configure BUITLIN_LED_PIN and turn the built in LED on to indicate we are initializing
   pinMode(BUITLIN_LED_PIN, OUTPUT);
-  digitalWrite(BUITLIN_LED_PIN, isLeft ? HIGH : LOW);
+  digitalWrite(BUITLIN_LED_PIN, HIGH);
 
   pinMode(SPEED_ANALOG_PIN, INPUT);
   pinMode(DIRECTION_BUTTON_PIN, INPUT_PULLUP);
 
   pinMode(DIRECTION_1A_PIN, OUTPUT);
   pinMode(DIRECTION_2A_PIN, OUTPUT);
-  setDirection(isLeft);
 
   // Theorically: Power rail is 5V and DC motor starting voltage is 2V on the datasheet -> PWM duty for start = 16% = square(2 / 5).
   // We measured our power supply at about 4.9V and the DC motor starting voltage at about 2.2V -> We observe a start at about PWM duty = 31%, implying a starting voltage of about 2.8V with a 4.9V power rail
   // The circuit had a 0.1uF capacitor between both leads to the DC motor and one 0.1uF capacitor from each lead to ground.
   minimumPwmDutyForMotorStart = getMinimumPwmDuty(2.0f, 5.0f);
 
+  // Start with the motor going 'left'
+  setDirection(true);
+
+  // Turn the built in LED off to indicate we are ready
+  digitalWrite(BUITLIN_LED_PIN, LOW);
 }
 
 void loop() {
-  bool hasChanged = getDirection();
-  if (hasChanged)
+  if (getDirectionChanged())
   {
-    digitalWrite(BUITLIN_LED_PIN, isLeft ? HIGH : LOW);
-    setDirection(isLeft);
+    setDirection(!isLeft);
   }
 
   // Read speed from potentiometer - It will be betwen 0 and 1023 since the Analog to Digital conversion is 10 bits
