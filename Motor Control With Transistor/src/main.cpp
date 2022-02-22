@@ -5,7 +5,7 @@
 #endif
 
 
-#define DEBOUNCE_DELAY_IN_MS 1
+#define DEBOUNCE_DELAY_IN_MS 10
 
 
 #define BUITLIN_LED_PIN 13
@@ -14,16 +14,16 @@
 #define MOTOR_CONTROL_PWM_PIN 3
 
 
-bool isMotorOn = false;
-uint8_t currentMotorSpeed = 0;
+bool isMotorOn;
+long currentMotorSpeed;
 
 
 bool readButtonStateWithDebounce(uint8_t pin, int& pinState)
 {
-  static int currentPinState;
-  static int lastPinState = HIGH;
+  static int currentPinState = LOW;
+  static int lastPinState = LOW;
 
-  static unsigned long lastPinChangeTime = 0;
+  static unsigned long lastPinChangeTime = millis();
 
   // Read the pin
   int reading = digitalRead(ON_OFF_BUTTON_PIN);
@@ -45,23 +45,25 @@ bool readButtonStateWithDebounce(uint8_t pin, int& pinState)
       return true;
     }
   }
+
+  pinState = reading;
   return false;
 }
 
-bool getOnOff() {
-  // Read the  button state and account for switch bounce
+bool getOnOffPressed()
+{
+  // Read the  button state and account for switch bounce - readButtonStateWithDebounce() will return true if this is a 'legitimate' button state change
+  // Our on / off button is configured on a INPUT_PULLUP pin so it will be 'pressed' with its stable state is LOW
   int buttonState;
-  if (readButtonStateWithDebounce(ON_OFF_BUTTON_PIN, buttonState))
-  {
-      // We have a stable reading - The pin is configured with INPUT_PULLUP so it is LOW when pressed and HIGH when released
-      if (buttonState == LOW)
-      {
-        isMotorOn = !isMotorOn;
-        return true;
-      }
-  }
+  return readButtonStateWithDebounce(ON_OFF_BUTTON_PIN, buttonState) && (buttonState == LOW);
+}
 
-  return false;
+void setMotorState(bool motorOn)
+{
+  isMotorOn = motorOn;
+  currentMotorSpeed = 0;
+  analogWrite(MOTOR_CONTROL_PWM_PIN, 0);
+  digitalWrite(BUITLIN_LED_PIN, motorOn ? HIGH : LOW);
 }
 
 void setup() {
@@ -70,23 +72,18 @@ void setup() {
   debug_init();
 #endif
 
+  // Configure BUITLIN_LED_PIN amd turn the built in LED on to indicate we are initializing
   pinMode(BUITLIN_LED_PIN, OUTPUT);
-  digitalWrite(BUITLIN_LED_PIN, LOW);
+  digitalWrite(BUITLIN_LED_PIN, HIGH);
 
   pinMode(SPEED_ANALOG_PIN, INPUT);
   pinMode(ON_OFF_BUTTON_PIN, INPUT_PULLUP);
 }
 
 void loop() {
-  bool hasChanged = getOnOff();
-  if (hasChanged)
+  if (getOnOffPressed())
   {
-    digitalWrite(BUITLIN_LED_PIN, isMotorOn ? HIGH : LOW);
-    if (!isMotorOn)
-    {
-        currentMotorSpeed = 0;
-        analogWrite(MOTOR_CONTROL_PWM_PIN, LOW);
-    }
+    setMotorState(!isMotorOn);
   }
 
   if (isMotorOn)
