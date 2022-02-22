@@ -72,7 +72,7 @@ void setup() {
   debug_init();
 #endif
 
-  // Configure BUITLIN_LED_PIN amd turn the built in LED on to indicate we are initializing
+  // Configure BUITLIN_LED_PIN and turn the built in LED on to indicate we are initializing
   pinMode(BUITLIN_LED_PIN, OUTPUT);
   digitalWrite(BUITLIN_LED_PIN, HIGH);
 
