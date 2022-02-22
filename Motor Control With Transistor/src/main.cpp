@@ -78,6 +78,9 @@ void setup() {
 
   pinMode(SPEED_ANALOG_PIN, INPUT);
   pinMode(ON_OFF_BUTTON_PIN, INPUT_PULLUP);
+  
+  // Start with motor off - This will reset the built in LED off indicating initialization is complete
+  setMotorState(false);
 }
 
 void loop() {
