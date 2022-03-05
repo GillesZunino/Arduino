@@ -66,6 +66,8 @@ void setMotorState(bool motorOn)
   digitalWrite(BUITLIN_LED_PIN, motorOn ? HIGH : LOW);
 }
 
+
+
 void setup() {
 #if DEBUG
   // Initialize GDB stub
@@ -78,7 +80,7 @@ void setup() {
 
   pinMode(SPEED_ANALOG_PIN, INPUT);
   pinMode(ON_OFF_BUTTON_PIN, INPUT_PULLUP);
-  
+
   // Start with motor off - This will reset the built in LED off indicating initialization is complete
   setMotorState(false);
 }
@@ -92,8 +94,9 @@ void loop() {
   if (isMotorOn)
   {
     // Read speed from potentiometer - It will be betwen 0 and 1023 since the Analog to Digital conversion is 10 bits
+    // Consider a reading or 0 on the potentiometer as "stop" and anything above 0 as the minimum PWN
     int speedPotentiometerValue = analogRead(SPEED_ANALOG_PIN);
-    uint8_t requestedSpeed = map(speedPotentiometerValue, 0, 1023, 0, 255);
+    long requestedSpeed = map(speedPotentiometerValue, 0, 1023, 0, 255);
     if (currentMotorSpeed != requestedSpeed)
     {
       currentMotorSpeed = requestedSpeed;
