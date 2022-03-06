@@ -24,6 +24,10 @@
 #define DIRECTION_1A_PIN 2
 #define DIRECTION_2A_PIN 7
 
+// How long to way for the motor to free stop before chaning direction
+#define DIRECTION_SWITCH_DELAY_MS 1200
+
+
 
 bool isLeft;
 long currentMotorSpeed = 0;
@@ -86,6 +90,22 @@ void setDirection(bool left)
   }
 }
 
+void switchDirection(bool left, long speed)
+{
+  // With EN HIGH, set both 1A and 2A to HIGH or LOW to trigger a 'fast stop' (see datasheet)
+  // We choose LOW to turn direction LEDs off, indicating a 'fast stop'
+  digitalWrite(DIRECTION_1A_PIN, LOW);
+  digitalWrite(DIRECTION_2A_PIN, LOW);
+  analogWrite(MOTOR_CONTROL_PWM_PIN, 255);
+
+  // Wait for the motor to stop - This was measured with a 7V DC power source, at motor full speed
+  delay(DIRECTION_SWITCH_DELAY_MS);
+
+  // Switch motor direction - Resume PWM to speed before direction change
+  setDirection(left);
+  analogWrite(MOTOR_CONTROL_PWM_PIN, speed);
+}
+
 void setup() {
 #if DEBUG
   // Initialize GDB stub
@@ -112,7 +132,7 @@ void setup() {
 void loop() {
   if (getDirectionChanged())
   {
-    setDirection(!isLeft);
+    switchDirection(!isLeft, currentMotorSpeed);
   }
 
   // Read speed from potentiometer - It will be betwen 0 and 1023 since the Analog to Digital conversion is 10 bits
