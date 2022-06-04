@@ -94,8 +94,8 @@ uint8_t dataPointsCollected = 0;
 void setup()
 {
 #if DEBUG
-  // Initialize GDB stub
-  debug_init();
+    // Initialize GDB stub
+    debug_init();
 #endif
 
     gfx->begin();
