@@ -27,19 +27,13 @@ typedef enum {
 #define ENCODER_INTERRUPT
 
 
-volatile TurnDirection direction = TurnDirection::Unknown;
-volatile int encoderPosition = 0;
-
-
-#ifdef ENCODER_INTERRUPT
-volatile byte encoderValueHasChanged;
-#endif
-
-
 
 #ifdef ENCODER_POLLING
 
-bool detectEncoderChanged() {
+bool detectRotaryEncoderChanges(int& position, TurnDirection& direction) {
+  static int currentEncoderPosition = 0;
+  static TurnDirection currentEncoderDirection = TurnDirection::Unknown;
+
   static int lastCLKValue = HIGH;
   static int lastSwitchValue = HIGH;
 
@@ -50,8 +44,8 @@ bool detectEncoderChanged() {
   if (SwitchValue != lastSwitchValue) {
     if (SwitchValue == LOW) {
       hasChanged = true;
-      encoderPosition = 0;
-      direction = TurnDirection::Unknown;
+      currentEncoderPosition = 0;
+      currentEncoderDirection = TurnDirection::Unknown;
     }
 
     lastSwitchValue = SwitchValue;
@@ -70,16 +64,20 @@ bool detectEncoderChanged() {
       hasChanged = true;
     
       if (DTValue != CLKValue) {
-        encoderPosition--;
-        direction = TurnDirection::CounterClockwise;
+        currentEncoderPosition--;
+        currentEncoderDirection = TurnDirection::CounterClockwise;
       } else {
-        encoderPosition++;
-        direction = TurnDirection::Clockwise;
+        currentEncoderPosition++;
+        currentEncoderDirection = TurnDirection::Clockwise;
       }
     }
 
     lastCLKValue = CLKValue;
   }
+
+
+  position = currentEncoderPosition;
+  direction = currentEncoderDirection;
 
   return hasChanged;
 }
@@ -88,6 +86,31 @@ bool detectEncoderChanged() {
 
 
 #ifdef ENCODER_INTERRUPT
+
+volatile int privateRotaryEncoderPosition;
+volatile TurnDirection privateRotaryEncoderDirection;
+volatile byte privateRotaryEncoderHasChanged;
+
+
+bool detectRotaryEncoderChanges(int& position, TurnDirection& direction) {
+  byte encoderHasChanged;
+  int currentEncoderValue;
+  TurnDirection currentEncoderDirection;
+
+  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+    encoderHasChanged = privateRotaryEncoderHasChanged;
+    currentEncoderValue = privateRotaryEncoderPosition;
+    currentEncoderDirection = privateRotaryEncoderDirection;
+
+    privateRotaryEncoderHasChanged = false;
+  }
+
+  position = currentEncoderValue;
+  direction = currentEncoderDirection;
+
+  return encoderHasChanged;
+}
+
 
 void EncoderCLKChangedHandler()
 {
@@ -103,14 +126,14 @@ void EncoderCLKChangedHandler()
   //
   if (CLKValue != lastCLKValue) {
     if (CLKValue == LOW) {
-      encoderValueHasChanged = true;
+      privateRotaryEncoderHasChanged = true;
 
       if (DTValue != CLKValue) {
-        encoderPosition--;
-        direction = TurnDirection::CounterClockwise;
+        privateRotaryEncoderPosition--;
+        privateRotaryEncoderDirection = TurnDirection::CounterClockwise;
       } else {
-        encoderPosition++;
-        direction = TurnDirection::Clockwise;
+        privateRotaryEncoderPosition++;
+        privateRotaryEncoderDirection = TurnDirection::Clockwise;
       }
     }
 
@@ -125,9 +148,9 @@ void EncoderSwitchChangedHandler() {
   if (SwitchValue != lastSwitchValue) {
     // Switch is active LOW
     if (SwitchValue == LOW) {
-      direction = TurnDirection::Unknown;
-      encoderPosition = 0;
-      encoderValueHasChanged = true;
+      privateRotaryEncoderDirection = TurnDirection::Unknown;
+      privateRotaryEncoderPosition = 0;
+      privateRotaryEncoderHasChanged = true;
     }
 
     lastSwitchValue = SwitchValue;
@@ -136,12 +159,29 @@ void EncoderSwitchChangedHandler() {
 
 #endif
 
+void setupRotaryEncoder() {
+  pinMode(PIN_ENCODER_CLK, INPUT);
+  pinMode(PIN_ENCODER_DT, INPUT);
+  pinMode(PIN_ENCODER_SWITCH, INPUT_PULLUP);
+
+#ifdef ENCODER_INTERRUPT
+  // Initialize private globals
+  privateRotaryEncoderPosition = 0;
+  privateRotaryEncoderDirection = TurnDirection::Unknown;
+  privateRotaryEncoderHasChanged = 0;
+
+  // It appears digitalPinToInterrupt() seems to only be able to convert pins 1, 2, 3
+  attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_CLK), EncoderCLKChangedHandler, CHANGE);
+  attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_SWITCH), EncoderSwitchChangedHandler, CHANGE);
+#endif
+}
+
 
 const char UnknownDirectionString[] ="????";
 const char ClockwiseDirectionString[] ="  CW";
 const char CounterClockwiseDirectionString[] = "C CW";
 
-const char* getDirectionString() {
+const char* getDirectionString(TurnDirection direction) {
     switch (direction) {
     case TurnDirection::Clockwise:
       return ClockwiseDirectionString;
@@ -155,14 +195,14 @@ const char* getDirectionString() {
   }
 }
 
-void displayState(int currentEncoderValue, TurnDirection currentEncoderDirection) {
+void displayRotaryEncoderState(int encoderValue, TurnDirection encoderDirection) {
   Serial.print("Position: ");
-  Serial.print(currentEncoderValue);
+  Serial.print(encoderValue);
   Serial.print(" ");
-  Serial.print(getDirectionString());
+  Serial.print(getDirectionString(encoderDirection));
   Serial.println();
 
-  switch (currentEncoderDirection) {
+  switch (encoderDirection) {
     case TurnDirection::Clockwise:
       digitalWrite(RIGHT_LED, HIGH);
       digitalWrite(LEFT_LED, LOW);
@@ -185,49 +225,30 @@ void displayState(int currentEncoderValue, TurnDirection currentEncoderDirection
 void setup() {
   Serial.begin (9600);
 
-  pinMode(PIN_ENCODER_CLK, INPUT);
-  pinMode(PIN_ENCODER_DT, INPUT);
-  pinMode(PIN_ENCODER_SWITCH, INPUT_PULLUP);
-
   pinMode(RIGHT_LED, OUTPUT);
   pinMode(LEFT_LED, OUTPUT);
 
-#ifdef ENCODER_INTERRUPT
-  encoderValueHasChanged = false;
-
-  // It appears digitalPinToInterrupt() seems to only be able to convert pins 1, 2, 3
-  attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_CLK), EncoderCLKChangedHandler, CHANGE);
-  attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_SWITCH), EncoderSwitchChangedHandler, CHANGE);
-#endif
-
-  displayState(encoderPosition, direction);
+  setupRotaryEncoder();
 }
 
 void loop() {
 
 #ifdef ENCODER_POLLING
-  if (detectEncoderChanged()) {
-    displayState(encoderPosition, direction);
+  int currentEncoderValue;
+  TurnDirection currentEncoderDirection;
+
+  if (detectRotaryEncoderChanges(currentEncoderValue, currentEncoderDirection)) {
+    displayRotaryEncoderState(currentEncoderValue, currentEncoderDirection);
   }
 #endif
 
 #ifdef ENCODER_INTERRUPT
-  byte encoderChanged = false;
-  int currentEncoderValue = 0;
+  int currentEncoderValue;
   TurnDirection currentEncoderDirection;
 
-  ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
-    encoderChanged = encoderValueHasChanged;
-    currentEncoderValue = encoderPosition;
-    currentEncoderDirection = direction;
-    encoderValueHasChanged = false;
+  if (detectRotaryEncoderChanges(currentEncoderValue, currentEncoderDirection)) {
+    displayRotaryEncoderState(currentEncoderValue, currentEncoderDirection);
   }
-
-  if (encoderChanged) {
-    displayState(currentEncoderValue, currentEncoderDirection);
-  }
-
-  delay(1);
 #endif
 
 }
