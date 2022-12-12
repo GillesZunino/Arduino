@@ -137,11 +137,11 @@ void EncoderSwitchChangedHandler() {
 #endif
 
 
-const String UnknownDirectionString("????");
-const String ClockwiseDirectionString("  CW");
-const String CounterClockwiseDirectionString("C CW");
+const char UnknownDirectionString[] ="????";
+const char ClockwiseDirectionString[] ="  CW";
+const char CounterClockwiseDirectionString[] = "C CW";
 
-const String& getDirectionString() {
+const char* getDirectionString() {
     switch (direction) {
     case TurnDirection::Clockwise:
       return ClockwiseDirectionString;
@@ -156,8 +156,11 @@ const String& getDirectionString() {
 }
 
 void displayState() {
-  String formattedOutput = "Position: " + String(encoderPosition) + " " + getDirectionString();
-  Serial.println(formattedOutput);
+  Serial.print("Position: ");
+  Serial.print(encoderPosition);
+  Serial.print(" ");
+  Serial.print(getDirectionString());
+  Serial.println();
 
   switch (direction) {
     case TurnDirection::Clockwise:
