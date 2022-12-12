@@ -155,14 +155,14 @@ const char* getDirectionString() {
   }
 }
 
-void displayState() {
+void displayState(int currentEncoderValue, TurnDirection currentEncoderDirection) {
   Serial.print("Position: ");
-  Serial.print(encoderPosition);
+  Serial.print(currentEncoderValue);
   Serial.print(" ");
   Serial.print(getDirectionString());
   Serial.println();
 
-  switch (direction) {
+  switch (currentEncoderDirection) {
     case TurnDirection::Clockwise:
       digitalWrite(RIGHT_LED, HIGH);
       digitalWrite(LEFT_LED, LOW);
@@ -200,27 +200,31 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(PIN_ENCODER_SWITCH), EncoderSwitchChangedHandler, CHANGE);
 #endif
 
-  displayState();
+  displayState(encoderPosition, direction);
 }
 
 void loop() {
 
 #ifdef ENCODER_POLLING
   if (detectEncoderChanged()) {
-    displayState();
+    displayState(encoderPosition, direction);
   }
 #endif
 
 #ifdef ENCODER_INTERRUPT
   byte encoderChanged = false;
+  int currentEncoderValue = 0;
+  TurnDirection currentEncoderDirection;
 
   ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
     encoderChanged = encoderValueHasChanged;
+    currentEncoderValue = encoderPosition;
+    currentEncoderDirection = direction;
     encoderValueHasChanged = false;
   }
 
   if (encoderChanged) {
-    displayState();
+    displayState(currentEncoderValue, currentEncoderDirection);
   }
 
   delay(1);
