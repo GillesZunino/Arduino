@@ -1,19 +1,15 @@
 #include <Arduino.h>
 
-#if DEBUG
-#include "avr8-stub.h"
-#include "app_api.h"
-#endif
+#include <avr8-stubs-utilities.h>
 
 #include <SingleSevenSegmentsDisplay.h>
 
 
-
 #define BUITLIN_LED_PIN 13
 
-#define SEVEN_SEGMENTS_DS_PIN 5      // "SERIAL DATA" - To shift register pin 'DS'    (14)
-#define SEVEN_SEGMENTS_SH_CP_PIN 3   // "CLOCK"       - To shift register pin 'SH_CP' (11)
-#define SEVEN_SEGMENTS_ST_CP_PIN 4   // "LATCH"       - To shift register pin 'ST_CP' (12)
+#define SEVEN_SEGMENTS_DS_PIN 6      // "SERIAL DATA" - To shift register pin 'DS'    (14)
+#define SEVEN_SEGMENTS_SH_CP_PIN 7   // "CLOCK"       - To shift register pin 'SH_CP' (11)
+#define SEVEN_SEGMENTS_ST_CP_PIN 8   // "LATCH"       - To shift register pin 'ST_CP' (12)
 
 
 
@@ -21,14 +17,15 @@ SingleSevenSegmentsDisplay singleSevenSegmentDisplay(SEVEN_SEGMENTS_DS_PIN, SEVE
 
 
 void setup() {
-#if DEBUG
-  // Initialize GDB stub - The debugger uses INT0 [pin 2 (Uno) or pin 21 (Mega)] so DO NOT USE these pins !
-  debug_init();
-#endif
+  INIT_DEBUGGER();
+
+  BREAKPOINT;
 
   // Configure BUITLIN_LED_PIN and turn the built in LED on to indicate we are initializing
   pinMode(BUITLIN_LED_PIN, OUTPUT);
   digitalWrite(BUITLIN_LED_PIN, HIGH);
+
+  DEBUG_MESSAGE("setup() complete");
 }
 
 void loop() {
