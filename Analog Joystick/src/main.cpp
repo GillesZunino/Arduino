@@ -22,7 +22,7 @@ void setup() {
   pinMode(Y_AXIS_ANALOG_PIN, INPUT);
   pinMode(PUSH_SWITCH_PIN, INPUT_PULLUP);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {

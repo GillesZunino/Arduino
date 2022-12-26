@@ -17,7 +17,7 @@ Adafruit_MPU6050 mpu;
 void setup() {
   INIT_DEBUGGER();
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Serial.println("Initializing MPU6050");
   if (!mpu.begin()) {

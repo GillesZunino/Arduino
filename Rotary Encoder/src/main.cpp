@@ -62,7 +62,7 @@ void displayRotaryEncoderState(int encoderValue, RotaryEncoder::TurnDirection en
 
 
 void setup() {
-  Serial.begin (9600);
+  Serial.begin (115200);
 
   pinMode(RIGHT_LED, OUTPUT);
   pinMode(LEFT_LED, OUTPUT);

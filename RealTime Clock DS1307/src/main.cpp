@@ -44,7 +44,7 @@ void setup()
   debug_init();
 #endif
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   Serial.println();
   Serial.println("Initialize RTC module");

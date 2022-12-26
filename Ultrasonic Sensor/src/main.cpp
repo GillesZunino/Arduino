@@ -29,7 +29,7 @@ void setup() {
   pinMode(ULTRASONIC_SENSOR_TRIGER_PIN, OUTPUT);
   pinMode(ULTRASONIC_SENSOR_ECHO_PIN, INPUT);
 
-  Serial.begin(9600);
+  Serial.begin(115200);
 }
 
 void loop() {

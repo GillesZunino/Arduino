@@ -37,7 +37,7 @@ void setup()
   pinMode(PHOTORESISTOR_INPUT_PIN, INPUT);
 
 #if DEBUG
-  Serial.begin(9600);
+  Serial.begin(115200);
   while (!Serial) { }
 #endif
 }
