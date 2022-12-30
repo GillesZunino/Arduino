@@ -45,6 +45,7 @@ void SingleSevenSegmentsDisplay::displayLetter(uint8_t letter, bool decimalPoint
     uint8_t decodedLetter = 0;
     switch (letter)
     {
+        // Segment Order: A, B, C, D, E, F, G, DP
         case 'A':
         decodedLetter = B11101110;
         break;
@@ -71,6 +72,9 @@ void SingleSevenSegmentsDisplay::displayLetter(uint8_t letter, bool decimalPoint
         break;
         case 'U':
         decodedLetter = B01111100;
+        break;
+        case '-':
+        decodedLetter = B00000010;
         break;
     }
 

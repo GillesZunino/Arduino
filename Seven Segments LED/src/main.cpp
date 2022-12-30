@@ -61,4 +61,7 @@ void loop() {
 
   singleSevenSegmentDisplay.displayLetter('U', true);
   delay(1000);
+
+  singleSevenSegmentDisplay.displayLetter('-', true);
+  delay(1000);
 }
