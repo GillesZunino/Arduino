@@ -6,8 +6,9 @@
 
 
 #define SPI_DIN 8
-#define SPI_CS 9
-#define SPI_CLK 10
+#define SPI_CLK 9
+#define SPI_CS 10
+
 
 
 EightSevenSegmentDisplays sevenSegmentsDisplays(SPI_DIN, SPI_CS, SPI_CLK);
@@ -34,7 +35,7 @@ void allCharactersForAllDigitsSequential() {
       'A' , 'C', 'E', 'F', 'H', 'J', 'L', 'P', 'U', '-', ' '
   };
 
-  for (uint8_t digit = 0; digit < 8; digit++) {
+  for (uint8_t digit = 0; digit < EightSevenSegmentDisplays::NumberOfDigits; digit++) {
     if (digit > 0) {
       sevenSegmentsDisplays.set(digit - 1, 0x00);
     }
@@ -48,7 +49,7 @@ void allCharactersForAllDigitsSequential() {
 
     delay (200);
 
-    if (digit == 7) {
+    if (digit == EightSevenSegmentDisplays::NumberOfDigits - 1) {
       sevenSegmentsDisplays.set(digit, 0x00);
     }
   }
@@ -57,7 +58,7 @@ void allCharactersForAllDigitsSequential() {
 void allSegmentsForAllDigitsSequential() {
   sevenSegmentsDisplays.clearDisplay();
 
-  for (uint8_t digit = 0; digit < 8; digit++) {
+  for (uint8_t digit = 0; digit < EightSevenSegmentDisplays::NumberOfDigits; digit++) {
     if (digit > 0) {
       sevenSegmentsDisplays.set(digit - 1, 0x00);
     }
@@ -65,7 +66,7 @@ void allSegmentsForAllDigitsSequential() {
 
     delay (1000);
 
-    if (digit == 7) {
+    if (digit == EightSevenSegmentDisplays::NumberOfDigits - 1) {
       sevenSegmentsDisplays.set(digit, 0x00);
     }
   }
@@ -74,12 +75,12 @@ void allSegmentsForAllDigitsSequential() {
 void decimalPointsChase() {
   sevenSegmentsDisplays.clearDisplay();
 
-  for (uint8_t digit = 0; digit < 8; digit++) {
+  for (uint8_t digit = 0; digit < EightSevenSegmentDisplays::NumberOfDigits; digit++) {
     sevenSegmentsDisplays.setDecimalPoint(digit, true);
     delay(500);
   }
 
-  for (int8_t digit = 7; digit >= 0; digit--) {
+  for (int8_t digit = EightSevenSegmentDisplays::NumberOfDigits - 1; digit >= 0; digit--) {
     sevenSegmentsDisplays.setDecimalPoint(digit, false);
     delay(500);
   }
@@ -87,10 +88,10 @@ void decimalPointsChase() {
 
 void bounceString(const char string[]) {
   uint8_t length = strlen(string);
-  if (length < 8) {
+  if (length < EightSevenSegmentDisplays::NumberOfDigits) {
     sevenSegmentsDisplays.clearDisplay();
 
-    for (int8_t index = 0; index <= 8 - length; index++) {
+    for (int8_t index = 0; index <= EightSevenSegmentDisplays::NumberOfDigits - length; index++) {
       for (int8_t blankIndex = 0; blankIndex < index; blankIndex++) {
         sevenSegmentsDisplays.setCharacter(blankIndex, ' ', false);
       }
@@ -104,8 +105,8 @@ void bounceString(const char string[]) {
 
     delay (200);
 
-    for (int8_t index = 8 - length; index >=0; index--) {
-      for (int8_t blankIndex = 7; blankIndex > index; blankIndex--) {
+    for (int8_t index = EightSevenSegmentDisplays::NumberOfDigits - length; index >=0; index--) {
+      for (int8_t blankIndex = EightSevenSegmentDisplays::NumberOfDigits - 1; blankIndex > index; blankIndex--) {
         sevenSegmentsDisplays.setCharacter(blankIndex, ' ', false);
       }
 
@@ -135,8 +136,8 @@ void loop() {
   delay(5000);
   sevenSegmentsDisplays.displayTest(false);
 
-  // Configure for mid brightness
-  sevenSegmentsDisplays.setBrightness(6);
+  // Configure for lower brightness
+  sevenSegmentsDisplays.setBrightness(4);
 
   // All on
   allDigitsOn();
