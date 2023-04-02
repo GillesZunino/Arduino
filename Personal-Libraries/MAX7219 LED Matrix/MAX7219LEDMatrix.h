@@ -16,7 +16,7 @@ class MAX7219LEDMatrix {
         void shutdown(bool on);
         void displayTest(bool on);
 
-        // Minimum 0x00 - Max 0x0F - All vaoues in between available
+        // Minimum 0x00 - Max 0x0F - All values in between available
         void setBrightness(uint8_t level);
 
         void setRow(int row, uint8_t value);

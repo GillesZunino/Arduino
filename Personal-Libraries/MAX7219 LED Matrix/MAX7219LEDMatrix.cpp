@@ -17,7 +17,7 @@ void MAX7219LEDMatrix::initialize() {
 }
 
 void MAX7219LEDMatrix::shutdown(bool on) {
-    if ( on) {
+    if (on) {
         // Mode: SHUTDOWN
         spiSendCommand(Command_Shutdown, 0x00);
     } else {
@@ -58,7 +58,7 @@ void MAX7219LEDMatrix::setColumn(int column, uint8_t value) {
             value <<= 1;
         }
 
-        for (int row = 0; row < 8; row++) {
+        for (int row = 0; row < sizeof(currentRows) / sizeof(currentRows[0]; row++) {
             spiSendCommand(row + 1, currentRows[row]);
         }
     }
@@ -73,7 +73,7 @@ void MAX7219LEDMatrix::set(int row, int column, bool on) {
                 currentRows[row] &= ~(1 << (7 - column));
             }
 
-            for (int row = 0; row < 8; row++) {
+            for (int row = 0; row < sizeof(currentRows) / sizeof(currentRows[0]; row++) {
                 spiSendCommand(row + 1, currentRows[row]);
             }
         }
@@ -81,9 +81,9 @@ void MAX7219LEDMatrix::set(int row, int column, bool on) {
 }
 
 void MAX7219LEDMatrix::clearDisplay() {
-    for (int row = 1; row <= 8; row++) {
+    for (int row = 0; row < sizeof(currentRows) / sizeof(currentRows[0]); row++) {
         currentRows[row] = 0x00;
-        spiSendCommand(row, 0x00);
+        spiSendCommand(row + 1, 0x00);
     }
 }
 

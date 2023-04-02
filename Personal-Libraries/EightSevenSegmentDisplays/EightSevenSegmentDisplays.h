@@ -3,6 +3,10 @@
 
 class EightSevenSegmentDisplays {
     public:
+    
+    static const uint8_t NumberOfDigits = 8;
+
+    public:
         EightSevenSegmentDisplays(int din, int cs, int clk);
 
         EightSevenSegmentDisplays(const EightSevenSegmentDisplays &) = delete;
@@ -39,7 +43,7 @@ class EightSevenSegmentDisplays {
         int csPin;
         int clkPin;
 
-        uint8_t currentDigits[8] = { 0x00 };
+        uint8_t currentDigits[EightSevenSegmentDisplays::NumberOfDigits] = { 0x00 };
 
     private:
         static const uint8_t Command_TestMode = 0x0F;
